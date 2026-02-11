@@ -160,7 +160,7 @@ def load_dataset():
 
 
 def process_func(example):
-    MAX_LENGTH = 2048    # Llama分词器会将一个中文字切分为多个token，因此需要放开一些最大长度，保证数据的完整性
+    MAX_LENGTH = 1024    # Llama分词器会将一个中文字切分为多个token，因此需要放开一些最大长度，保证数据的完整性
     input_ids, attention_mask, labels = [], [], []
     instruction = tokenizer(f"<|start_header_id|>user<|end_header_id|>\n\n{example['instruction'] + example['input']}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n", add_special_tokens=False)  # add_special_tokens 不在开头加 special_tokens
     response = tokenizer(f"{example['output']}<|eot_id|>", add_special_tokens=False)
@@ -219,8 +219,8 @@ def train():
     # 6. configure fine-tuning parameters and train model
     args = TrainingArguments(
         output_dir="modelSave/llama3_1_instruct_lora",
-        per_device_train_batch_size=3,
-        gradient_accumulation_steps=3,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=8,
         logging_steps=10,
         num_train_epochs=1,
         save_steps=100,  # 为了快速演示，这里设置10，建议你设置成100
