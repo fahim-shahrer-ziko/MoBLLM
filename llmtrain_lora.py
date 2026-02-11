@@ -135,13 +135,13 @@ def organise_data(data_train, uid, data_inst, data_name='gl'):
 def load_dataset():
     seed = 111
     random.seed(seed)
-    if not os.path.exists('data4FT/temp/ft_train.json'):
+    if not os.path.exists('/content/MoBLLM/data4FT/temp/ft_train.json'):
         trainset, valset = [], []
         # assemble instructions and data input
         for data_name in ['ori', 'dest']:
-            with open(f'data4FT/ft_{data_name}.pkl', 'rb') as fr:
+            with open(f'/content/MoBLLM/data4FT/ft_{data_name}.pkl', 'rb') as fr:
                 data_train, data_val, data_test = pickle.load(fr)
-            with open('prompts_store/ft_traindata/prim_instructions.pkl', 'rb') as fr:
+            with open('/content/MoBLLM/prompts_store/ft_traindata/prim_instructions.pkl', 'rb') as fr:
                 data_inst = pickle.load(fr)[data_name]
             for uid in data_train:
                 xy_train = organise_data(data_train, uid, data_inst, data_name)
@@ -150,10 +150,10 @@ def load_dataset():
                 xy_val = organise_data(data_val, uid, data_inst, data_name)
                 valset.extend(xy_val)
         trainset.extend(valset)
-        with open('data4FT/temp/ft_train.json', 'w') as fw:
+        with open('/content/MoBLLM/data4FT/temp/ft_train.json', 'w') as fw:
             json.dump(trainset, fw, indent=4)
 
-    df = pd.read_json('data4FT/temp/ft_train.json')
+    df = pd.read_json('/content/MoBLLM/data4FT/temp/ft_train.json')
     ds = Dataset.from_pandas(df)
 
     return ds
