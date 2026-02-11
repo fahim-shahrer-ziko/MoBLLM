@@ -138,7 +138,7 @@ def load_dataset():
     if not os.path.exists('data4FT/temp/ft_train.json'):
         trainset, valset = [], []
         # assemble instructions and data input
-        for data_name in ['fsq', 'gl', 'ori', 'dest']:
+        for data_name in ['ori', 'dest']:
             with open(f'data4FT/ft_{data_name}.pkl', 'rb') as fr:
                 data_train, data_val, data_test = pickle.load(fr)
             with open('prompts_store/ft_traindata/prim_instructions.pkl', 'rb') as fr:
