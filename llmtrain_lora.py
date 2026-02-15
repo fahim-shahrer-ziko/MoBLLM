@@ -182,6 +182,8 @@ def train():
     global tokenizer
     from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer, DataCollatorForSeq2Seq
     import torch
+    from transformers import BitsAndBytesConfig
+    import os
     from peft import LoraConfig, TaskType, get_peft_model
 
 
@@ -192,11 +194,31 @@ def train():
 
 
     # 2. load model configurations
-    tokenizer = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct',
-                                              use_fast=False, trust_remote_code=True)
+    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_id,
+        use_fast=False,
+        trust_remote_code=True,
+        token=os.environ.get("HF_TOKEN")  # if you use HF_TOKEN secret; safe if None
+    )
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct',
-                                                 device_map="cuda", torch_dtype=torch.bfloat16, use_cache=False)
+    
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=torch.float16,   # T4 supports fp16 well
+    )
+    
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        quantization_config=bnb_config,
+        device_map="auto",                      # IMPORTANT
+        use_cache=False,
+        token=os.environ.get("HF_TOKEN")
+    )
+
 
     # 3. tokenize dataset
     tokenized_id = ds.map(process_func, remove_columns=ds.column_names)
@@ -212,9 +234,12 @@ def train():
     )
 
     # 5. load lora adapter
-    model.enable_input_require_grads() # 开启梯度检查点时，要执行该方法
+    from peft import prepare_model_for_kbit_training
+
+    model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, config)
     model.print_trainable_parameters()
+
 
     # 6. configure fine-tuning parameters and train model
     args = TrainingArguments(
@@ -223,12 +248,12 @@ def train():
         gradient_accumulation_steps=8,
         logging_steps=10,
         num_train_epochs=1,
-        save_steps=100,  # 为了快速演示，这里设置10，建议你设置成100
+        save_steps=100,
         learning_rate=1e-4,
-        save_on_each_node=True,
-        gradient_checkpointing=True
+        gradient_checkpointing=True,
+        fp16=True,                      # add this
+        report_to="none"
     )
-
     trainer = Trainer(
         model=model,
         args=args,
