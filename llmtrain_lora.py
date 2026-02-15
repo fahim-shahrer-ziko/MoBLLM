@@ -141,7 +141,7 @@ def load_dataset():
         for data_name in ['ori', 'dest']:
             with open(f'/kaggle/working/data4FT/ft_{data_name}.pkl', 'rb') as fr:
                 data_train, data_val, data_test = pickle.load(fr)
-            with open('/kaggle/working/prompts_store/ft_traindata/prim_instructions.pkl', 'rb') as fr:
+            with open('/kaggle/working/MoBLLM/prompts_store/ft_traindata/prim_instructions.pkl', 'rb') as fr:
                 data_inst = pickle.load(fr)[data_name]
             for uid in data_train:
                 xy_train = organise_data(data_train, uid, data_inst, data_name)
